@@ -25,12 +25,12 @@ func TestBasicEnvironment(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	conf := store.Exercise{
-		Name: "Test Exercise",
+	conf := store.ChallengeConfig{
+		Name: "Test ChallengeConfig",
 		Tags: []store.Tag{"test"},
 		DockerConfs: []store.DockerConfig{
 			{
-				ExerciseInstanceConfig: store.ExerciseInstanceConfig{
+				ChallengeInstanceConfig: store.ChallengeInstanceConfig{
 					InstanceConfig: store.InstanceConfig{Image: "nginx"},
 				},
 			},

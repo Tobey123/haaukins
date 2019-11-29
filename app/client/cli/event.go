@@ -42,7 +42,7 @@ func (c *Client) CmdEventCreate() *cobra.Command {
 		available int
 		capacity  int
 		frontends []string
-		exercises []string
+		challenges []string
 	)
 
 	cmd := &cobra.Command{
@@ -57,7 +57,7 @@ func (c *Client) CmdEventCreate() *cobra.Command {
 				Name:      name,
 				Tag:       tag,
 				Frontends: frontends,
-				Exercises: exercises,
+				Challenges: challenges,
 				Capacity:  int32(capacity),
 				Available: int32(available),
 			})
@@ -98,7 +98,7 @@ func (c *Client) CmdEventCreate() *cobra.Command {
 	cmd.Flags().IntVarP(&available, "available", "a", 5, "amount of labs to make available initially for the event")
 	cmd.Flags().IntVarP(&capacity, "capacity", "c", 10, "maximum amount of labs")
 	cmd.Flags().StringSliceVarP(&frontends, "frontends", "f", []string{}, "list of frontends to have for each lab")
-	cmd.Flags().StringSliceVarP(&exercises, "exercises", "e", []string{}, "list of exercises to have for each lab")
+	cmd.Flags().StringSliceVarP(&challenges, "challenges", "e", []string{}, "list of challenges to have for each lab")
 	cmd.MarkFlagRequired("name")
 
 	return cmd

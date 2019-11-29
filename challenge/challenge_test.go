@@ -14,7 +14,7 @@ import (
 
 func dconfFromRecords(records []store.RecordConfig) store.DockerConfig {
 	return store.DockerConfig{
-		ExerciseInstanceConfig: store.ExerciseInstanceConfig{
+		ChallengeInstanceConfig: store.ChallengeInstanceConfig{
 			Records: records,
 		},
 	}
@@ -34,7 +34,7 @@ func TestContainerOpts(t *testing.T) {
 		},
 	}
 	dockerConfs := []store.DockerConfig{dconfFromRecords(records)}
-	conf := store.Exercise{
+	conf := store.ChallengeConfig{
 		DockerConfs: dockerConfs,
 	}
 	containerOptions := conf.ContainerOpts()
@@ -93,7 +93,7 @@ func TestExerciseCreate(t *testing.T) {
 		dconfFromRecords(firstRecords),
 		dconfFromRecords(secondRecords),
 	}
-	conf := store.Exercise{
+	conf := store.ChallengeConfig{
 		DockerConfs: dockerConfs,
 	}
 	e := NewChallenge(conf, testDockerHost{}, nil, &testNetwork{}, "")

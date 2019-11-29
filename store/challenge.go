@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	EmptyExTags         = errors.New("Exercise cannot have zero tags")
+	EmptyExTags         = errors.New("ChallengeConfig cannot have zero tags")
 	ImageNotDefinedErr  = errors.New("image cannot be empty")
 	MemoryNotDefinedErr = errors.New("memory cannot be empty")
 )
@@ -38,14 +38,14 @@ func (eee *ExerTagExistsErr) Error() string {
 	return fmt.Sprintf("Tag already exists: %s", eee.tag)
 }
 
-type Exercise struct {
+type ChallengeConfig struct {
 	Name        string         `yaml:"name"`
 	Tags        []Tag          `yaml:"tags"`
 	DockerConfs []DockerConfig `yaml:"docker"`
 	VboxConfs   []VboxConfig   `yaml:"vbox"`
 }
 
-func (e Exercise) Flags() []FlagConfig {
+func (e ChallengeConfig) Flags() []FlagConfig {
 	var res []FlagConfig
 
 	for _, dockerConf := range e.DockerConfs {
@@ -59,9 +59,9 @@ func (e Exercise) Flags() []FlagConfig {
 	return res
 }
 
-func (e Exercise) Validate() error {
+func (e ChallengeConfig) Validate() error {
 	if len(e.Tags) == 0 {
-		return &EmptyVarErr{Var: "Tags", Type: "Exercise"}
+		return &EmptyVarErr{Var: "Tags", Type: "ChallengeConfig"}
 	}
 
 	for _, t := range e.Tags {
@@ -91,7 +91,7 @@ type ContainerOptions struct {
 	Challenges []Challenge
 }
 
-func (e Exercise) ContainerOpts() []ContainerOptions {
+func (e ChallengeConfig) ContainerOpts() []ContainerOptions {
 	var opts []ContainerOptions
 
 	for _, conf := range e.DockerConfs {
@@ -206,8 +206,8 @@ func (evc EnvVarConfig) Validate() error {
 }
 
 type DockerConfig struct {
-	Envs                   []EnvVarConfig `yaml:"env"`
-	ExerciseInstanceConfig `yaml:",inline"`
+	Envs                    []EnvVarConfig `yaml:"env"`
+	ChallengeInstanceConfig `yaml:",inline"`
 }
 
 func (df DockerConfig) Validate() error {
@@ -217,11 +217,11 @@ func (df DockerConfig) Validate() error {
 		}
 	}
 
-	return df.ExerciseInstanceConfig.Validate()
+	return df.ChallengeInstanceConfig.Validate()
 }
 
 type VboxConfig struct {
-	ExerciseInstanceConfig `yaml:",inline"`
+	ChallengeInstanceConfig `yaml:",inline"`
 }
 
 func (vc VboxConfig) Validate() error {
@@ -234,13 +234,13 @@ func (vc VboxConfig) Validate() error {
 	return nil
 }
 
-type ExerciseInstanceConfig struct {
+type ChallengeInstanceConfig struct {
 	Flags          []FlagConfig   `yaml:"flag"`
 	Records        []RecordConfig `yaml:"dns"`
 	InstanceConfig `yaml:",inline"`
 }
 
-func (eic ExerciseInstanceConfig) Validate() error {
+func (eic ChallengeInstanceConfig) Validate() error {
 	for _, f := range eic.Flags {
 		if err := f.Validate(); err != nil {
 			return err
@@ -276,36 +276,36 @@ func (ic InstanceConfig) Validate() error {
 	return nil
 }
 
-type exercisestore struct {
-	m         sync.Mutex
-	tags      map[Tag]*Exercise
-	exercises []*Exercise
-	hooks     []func([]Exercise) error
+type challengestore struct {
+	m          sync.Mutex
+	tags       map[Tag]*ChallengeConfig
+	challenges []*ChallengeConfig
+	hooks      []func([]ChallengeConfig) error
 }
 
-func (es *exercisestore) UpdateExercisesFile(path string) (ExerciseStore, error) {
-	exStore, err := NewExerciseFile(path)
+func (es *challengestore) UpdateChallengesFile(path string) (ChallengeStore, error) {
+	exStore, err := NewChallengeFile(path)
 	if err != nil {
 		return nil, err
 	}
 	return exStore, nil
 }
 
-type ExerciseStore interface {
-	GetExercisesByTags(...Tag) ([]Exercise, error)
-	CreateExercise(Exercise) error
-	DeleteExerciseByTag(Tag) error
-	ListExercises() []Exercise
-	UpdateExercisesFile(string) (ExerciseStore, error)
+type ChallengeStore interface {
+	GetChallengesByTags(...Tag) ([]ChallengeConfig, error)
+	CreateChallenge(ChallengeConfig) error
+	DeleteChallengeByTag(Tag) error
+	ListChallenges() []ChallengeConfig
+	UpdateChallengesFile(string) (ChallengeStore, error)
 }
 
-func NewExerciseStore(exercises []Exercise, hooks ...func([]Exercise) error) (ExerciseStore, error) {
-	s := exercisestore{
-		tags: map[Tag]*Exercise{},
+func NewChallengeStore(exercises []ChallengeConfig, hooks ...func([]ChallengeConfig) error) (ChallengeStore, error) {
+	s := challengestore{
+		tags: map[Tag]*ChallengeConfig{},
 	}
 
 	for _, e := range exercises {
-		if err := s.CreateExercise(e); err != nil {
+		if err := s.CreateChallenge(e); err != nil {
 			return nil, err
 		}
 	}
@@ -315,11 +315,11 @@ func NewExerciseStore(exercises []Exercise, hooks ...func([]Exercise) error) (Ex
 	return &s, nil
 }
 
-func (es *exercisestore) GetExercisesByTags(tags ...Tag) ([]Exercise, error) {
+func (es *challengestore) GetChallengesByTags(tags ...Tag) ([]ChallengeConfig, error) {
 	es.m.Lock()
 	defer es.m.Unlock()
 
-	configs := make([]Exercise, len(tags))
+	configs := make([]ChallengeConfig, len(tags))
 	for i, t := range tags {
 		e, ok := es.tags[t]
 		if !ok {
@@ -332,16 +332,16 @@ func (es *exercisestore) GetExercisesByTags(tags ...Tag) ([]Exercise, error) {
 	return configs, nil
 }
 
-func (es *exercisestore) ListExercises() []Exercise {
-	exer := make([]Exercise, len(es.exercises))
-	for i, e := range es.exercises {
+func (es *challengestore) ListChallenges() []ChallengeConfig {
+	exer := make([]ChallengeConfig, len(es.challenges))
+	for i, e := range es.challenges {
 		exer[i] = *e
 	}
 
 	return exer
 }
 
-func (es *exercisestore) CreateExercise(e Exercise) error {
+func (es *challengestore) CreateChallenge(e ChallengeConfig) error {
 	es.m.Lock()
 	defer es.m.Unlock()
 
@@ -359,12 +359,12 @@ func (es *exercisestore) CreateExercise(e Exercise) error {
 		es.tags[t] = &e
 	}
 
-	es.exercises = append(es.exercises, &e)
+	es.challenges = append(es.challenges, &e)
 
 	return es.RunHooks()
 }
 
-func (es *exercisestore) DeleteExerciseByTag(t Tag) error {
+func (es *challengestore) DeleteChallengeByTag(t Tag) error {
 	es.m.Lock()
 	defer es.m.Unlock()
 
@@ -377,9 +377,9 @@ func (es *exercisestore) DeleteExerciseByTag(t Tag) error {
 		delete(es.tags, ta)
 	}
 
-	for i, ex := range es.exercises {
+	for i, ex := range es.challenges {
 		if ex == e {
-			es.exercises = append(es.exercises[:i], es.exercises[i+1:]...)
+			es.challenges = append(es.challenges[:i], es.challenges[i+1:]...)
 			break
 		}
 	}
@@ -387,9 +387,9 @@ func (es *exercisestore) DeleteExerciseByTag(t Tag) error {
 	return es.RunHooks()
 }
 
-func (es *exercisestore) RunHooks() error {
+func (es *challengestore) RunHooks() error {
 	for _, h := range es.hooks {
-		if err := h(es.ListExercises()); err != nil {
+		if err := h(es.ListChallenges()); err != nil {
 			return err
 		}
 	}
@@ -397,9 +397,9 @@ func (es *exercisestore) RunHooks() error {
 	return nil
 }
 
-func NewExerciseFile(path string) (ExerciseStore, error) {
+func NewChallengeFile(path string) (ChallengeStore, error) {
 	var conf struct {
-		Exercises []Exercise `yaml:"exercises"`
+		Challenges []ChallengeConfig `yaml:"challenges"`
 	}
 
 	var m sync.Mutex
@@ -427,15 +427,15 @@ func NewExerciseFile(path string) (ExerciseStore, error) {
 			return nil, err
 		}
 
-		for _, ex := range conf.Exercises {
+		for _, ex := range conf.Challenges {
 			if err := ex.Validate(); err != nil {
 				return nil, err
 			}
 		}
 	}
 
-	return NewExerciseStore(conf.Exercises, func(e []Exercise) error {
-		conf.Exercises = e
+	return NewChallengeStore(conf.Challenges, func(e []ChallengeConfig) error {
+		conf.Challenges = e
 		return save()
 	})
 }

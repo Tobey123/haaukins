@@ -487,18 +487,18 @@ func TestCreateEvent(t *testing.T) {
 		unauthorized bool
 		err          string
 	}{
-		{name: "Normal", event: pb.CreateEventRequest{Name: "Test", Tag: "tst", Exercises: []string{"hb"}, Frontends: []string{"kali"}}},
-		{name: "Unauthorized", unauthorized: true, event: pb.CreateEventRequest{Name: "Test", Tag: "tst", Exercises: []string{"hb"}, Frontends: []string{"kali"}}, err: "unauthorized"},
-		{name: "Empty name", event: pb.CreateEventRequest{Tag: "tst", Exercises: []string{"hb"}, Frontends: []string{"kali"}}, err: "Name cannot be empty for Event"},
-		{name: "Empty tag", event: pb.CreateEventRequest{Name: "Test", Exercises: []string{"hb"}, Frontends: []string{"kali"}}, err: "Tag cannot be empty for Event"},
-		{name: "Empty exercises", event: pb.CreateEventRequest{Name: "Test", Tag: "tst", Frontends: []string{"kali"}}, err: "Exercises cannot be empty for Event"},
-		{name: "Empty frontends", event: pb.CreateEventRequest{Name: "Test", Tag: "tst", Exercises: []string{"hb"}}, err: "Frontends cannot be empty for Event"},
+		{name: "Normal", event: pb.CreateEventRequest{Name: "Test", Tag: "tst", Challenges: []string{"hb"}, Frontends: []string{"kali"}}},
+		{name: "Unauthorized", unauthorized: true, event: pb.CreateEventRequest{Name: "Test", Tag: "tst", Challenges: []string{"hb"}, Frontends: []string{"kali"}}, err: "unauthorized"},
+		{name: "Empty name", event: pb.CreateEventRequest{Tag: "tst", Challenges: []string{"hb"}, Frontends: []string{"kali"}}, err: "Name cannot be empty for Event"},
+		{name: "Empty tag", event: pb.CreateEventRequest{Name: "Test", Challenges: []string{"hb"}, Frontends: []string{"kali"}}, err: "Tag cannot be empty for Event"},
+		{name: "Empty exercises", event: pb.CreateEventRequest{Name: "Test", Tag: "tst", Frontends: []string{"kali"}}, err: "Challenges cannot be empty for Event"},
+		{name: "Empty frontends", event: pb.CreateEventRequest{Name: "Test", Tag: "tst", Challenges: []string{"hb"}}, err: "Frontends cannot be empty for Event"},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			ev := fakeEvent{}
-			exStore, err := store.NewExerciseStore([]store.Exercise{{
+			exStore, err := store.NewChallengeStore([]store.ChallengeConfig{{
 				Tags: []store.Tag{"hb"},
 			}})
 			if err != nil {
@@ -510,7 +510,7 @@ func TestCreateEvent(t *testing.T) {
 				conf:      &Config{},
 				eventPool: eventPool,
 				frontends: &fakeFrontendStore{},
-				exercises: exStore,
+				challenges: exStore,
 				auth: &noAuth{
 					allowed: !tc.unauthorized,
 				},
@@ -632,7 +632,7 @@ func TestStopEvent(t *testing.T) {
 				},
 			}
 
-			d.startEvent(&ev)
+			ev.Start(context.TODO())
 
 			dialer, close := getServer(d)
 			defer close()
@@ -737,7 +737,8 @@ func TestListEvents(t *testing.T) {
 			for i := 1; i <= tc.count; i++ {
 				tempEvent := *ev
 				tempEvent.conf = store.EventConfig{StartedAt: &startedAt, Tag: store.Tag(fmt.Sprintf("tst-%d", i))}
-				d.startEvent(&tempEvent)
+				//d.startEvent(&tempEvent)
+				tempEvent.Start(context.TODO())
 			}
 
 			dialer, close := getServer(d)
@@ -932,8 +933,8 @@ func TestResetExercise(t *testing.T) {
 			defer conn.Close()
 
 			client := pb.NewDaemonClient(conn)
-			stream, err := client.ResetExercise(ctx, &pb.ResetExerciseRequest{
-				ExerciseTag: tc.extag,
+			stream, err := client.ResetChallenge(ctx, &pb.ResetChallengeRequest{
+				ChallengeTag: tc.extag,
 				EventTag:    tc.evtag,
 				Teams:       tc.teams,
 			})

@@ -24,7 +24,7 @@ var (
 
 type Config struct {
 	Frontends []store.InstanceConfig
-	Exercises []store.Exercise
+	Exercises []store.ChallengeConfig
 }
 
 func (conf Config) Flags() []store.FlagConfig {

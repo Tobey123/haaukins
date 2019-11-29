@@ -38,10 +38,10 @@ var (
 type Host interface {
 	CreateEventFromConfig(context.Context, store.EventConfig) (Event, error)
 	CreateEventFromEventFile(context.Context, store.EventFile) (Event, error)
-	UpdateEventHostExercisesFile(store.ExerciseStore) error
+	UpdateEventHostChallengesFile(store.ChallengeStore) error
 }
 
-func NewHost(vlib vbox.Library, elib store.ExerciseStore, efh store.EventFileHub) Host {
+func NewHost(vlib vbox.Library, elib store.ChallengeStore, efh store.EventFileHub) Host {
 	return &eventHost{
 		ctx:  context.Background(),
 		efh:  efh,
@@ -54,11 +54,11 @@ type eventHost struct {
 	ctx  context.Context
 	efh  store.EventFileHub
 	vlib vbox.Library
-	elib store.ExerciseStore
+	elib store.ChallengeStore
 }
 
-func (eh *eventHost) UpdateEventHostExercisesFile(es store.ExerciseStore) error {
-	if len(es.ListExercises()) == 0 {
+func (eh *eventHost) UpdateEventHostChallengesFile(es store.ChallengeStore) error {
+	if len(es.ListChallenges()) == 0 {
 		return errors.New("Provided exercisestore is empty, be careful next time ! ")
 	}
 	eh.elib = es
@@ -71,7 +71,7 @@ func (eh *eventHost) CreateEventFromEventFile(ctx context.Context, ef store.Even
 		return nil, err
 	}
 
-	exer, err := eh.elib.GetExercisesByTags(conf.Lab.Exercises...)
+	exer, err := eh.elib.GetChallengesByTags(conf.Lab.Challenges...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,6 +94,7 @@ func (eh *eventHost) CreateEventFromEventFile(ctx context.Context, ef store.Even
 }
 
 func (eh *eventHost) CreateEventFromConfig(ctx context.Context, conf store.EventConfig) (Event, error) {
+	// store configuration information of the event to file.
 	ef, err := eh.efh.CreateEventFile(conf)
 	if err != nil {
 		return nil, err

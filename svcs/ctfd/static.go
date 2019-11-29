@@ -15,7 +15,7 @@ const (
 	    <p>National Training Platform</p>
 	</h3>
 	<p class="text-center">
-	    A platform for Cyber Security Exercises 
+	    A platform for Cyber Security Challenges 
 	</p>
 	<p class="text-center">
 	    Founded by <a href="http://danishcybersecurityclusters.dk/">Danish Cyber Security Clusters</a>

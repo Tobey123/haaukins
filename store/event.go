@@ -53,8 +53,8 @@ func (e EventConfig) Validate() error {
 		return &EmptyVarErr{Var: "Tag", Type: "Event"}
 	}
 
-	if len(e.Lab.Exercises) == 0 {
-		return &EmptyVarErr{Var: "Exercises", Type: "Event"}
+	if len(e.Lab.Challenges) == 0 {
+		return &EmptyVarErr{Var: "Challenges", Type: "Event"}
 	}
 
 	if len(e.Lab.Frontends) == 0 {
@@ -66,7 +66,7 @@ func (e EventConfig) Validate() error {
 
 type Lab struct {
 	Frontends []InstanceConfig `yaml:"frontends"`
-	Exercises []Tag            `yaml:"exercises"`
+	Challenges []Tag            `yaml:"challenges"`
 }
 
 type Challenge struct {

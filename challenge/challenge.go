@@ -42,7 +42,7 @@ func (dockerHost) CreateContainer(ctx context.Context, conf docker.ContainerConf
 
 type challenge struct {
 	containerOpts []store.ContainerOptions
-	vboxOpts      []store.ExerciseInstanceConfig
+	vboxOpts      []store.ChallengeInstanceConfig
 
 	dhost DockerHost
 	vlib  vbox.Library
@@ -55,12 +55,12 @@ type challenge struct {
 	machines []virtual.Instance
 }
 
-func NewChallenge(conf store.Exercise, dhost DockerHost, vlib vbox.Library, net docker.Network, dnsAddr string) *challenge {
+func NewChallenge(conf store.ChallengeConfig, dhost DockerHost, vlib vbox.Library, net docker.Network, dnsAddr string) *challenge {
 	containerOpts := conf.ContainerOpts()
 
-	var vboxOpts []store.ExerciseInstanceConfig
+	var vboxOpts []store.ChallengeInstanceConfig
 	for _, vboxConf := range conf.VboxConfs {
-		vboxOpts = append(vboxOpts, vboxConf.ExerciseInstanceConfig)
+		vboxOpts = append(vboxOpts, vboxConf.ChallengeInstanceConfig)
 	}
 
 	return &challenge{

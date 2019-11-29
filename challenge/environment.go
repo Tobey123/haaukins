@@ -20,7 +20,7 @@ import (
 
 type Environment interface {
 	Create(context.Context) error
-	Add(context.Context, ...store.Exercise) error
+	Add(context.Context, ...store.ChallengeConfig) error
 	ResetByTag(context.Context, string) error
 	NetworkInterface() string
 	Challenges() []store.Challenge
@@ -60,7 +60,7 @@ func (ee *environment) Create(ctx context.Context) error {
 	return nil
 }
 
-func (ee *environment) Add(ctx context.Context, confs ...store.Exercise) error {
+func (ee *environment) Add(ctx context.Context, confs ...store.ChallengeConfig) error {
 	for _, conf := range confs {
 		if len(conf.Tags) == 0 {
 			return MissingTagsErr

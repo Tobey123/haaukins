@@ -6,6 +6,7 @@ package daemon
 
 import (
 	"github.com/aau-network-security/haaukins/event"
+	"github.com/rs/zerolog/log"
 	"net/http"
 	"strings"
 	"sync"
@@ -33,12 +34,14 @@ func NewEventPool(host string) *eventPool {
 
 
 func (ep *eventPool) AddEvent(ev event.Event) {
+	log.Info().Msg("Entering add event function .... ")
 	tag := ev.GetConfig().Tag
 	ep.m.Lock()
 	defer ep.m.Unlock()
 
 	ep.events[tag] = ev
 	ep.handlers[tag] = ev.Handler()
+	log.Info().Msg("Exiting add event function ....")
 }
 
 func (ep *eventPool) RemoveEvent(t store.Tag) error {

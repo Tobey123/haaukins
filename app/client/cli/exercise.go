@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func (c *Client) CmdExercise() *cobra.Command {
+func (c *Client) CmdChallenge() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "challenge",
 		Short: "Actions to perform on exercises",
@@ -24,23 +24,23 @@ func (c *Client) CmdExercise() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		c.CmdExerciseList(),
-		c.CmdExerciseReset(),
-		c.CmdUpdateExerciseFile(),
+		c.CmdChallengeList(),
+		c.CmdChallengeReset(),
+		c.CmdUpdateChallengeFile(),
 	)
 
 	return cmd
 }
 
-func (c *Client) CmdExercises() *cobra.Command {
+func (c *Client) CmdChallenges() *cobra.Command {
 	return &cobra.Command{
-		Use:     "exercises",
-		Short:   "List exercises",
+		Use:     "challenges",
+		Short:   "List challenges",
 		Example: `hkn challenge list`,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			r, err := c.rpcClient.ListExercises(ctx, &pb.Empty{})
+			r, err := c.rpcClient.ListChallenges(ctx, &pb.Empty{})
 			if err != nil {
 				PrintError(err)
 				return
@@ -52,7 +52,7 @@ func (c *Client) CmdExercises() *cobra.Command {
 			}
 
 			var elements []formatElement
-			for _, e := range r.Exercises {
+			for _, e := range r.Challenges {
 				elements = append(elements, struct {
 					Name             string
 					Tags             string
@@ -76,22 +76,22 @@ func (c *Client) CmdExercises() *cobra.Command {
 	}
 }
 
-func (c *Client) CmdExerciseList() *cobra.Command {
-	cmd := *c.CmdExercises()
+func (c *Client) CmdChallengeList() *cobra.Command {
+	cmd := *c.CmdChallenges()
 	cmd.Use = "ls"
 	cmd.Aliases = []string{"ls", "list"}
 	return &cmd
 }
-func (c *Client) CmdUpdateExerciseFile() *cobra.Command {
+func (c *Client) CmdUpdateChallengeFile() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "update [path of challenges file]",
 		Short:   "Updates challenges file",
-		Example: "hkn update exercises.yml",
+		Example: "hkn update challenges.yml",
 		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 			defer cancel()
-			resp, err := c.rpcClient.UpdateExercisesFile(ctx, &pb.Empty{})
+			resp, err := c.rpcClient.UpdateChallengesFile(ctx, &pb.Empty{})
 			if err != nil {
 				PrintError(err)
 			}
@@ -101,7 +101,7 @@ func (c *Client) CmdUpdateExerciseFile() *cobra.Command {
 	return cmd
 }
 
-func (c *Client) CmdExerciseReset() *cobra.Command {
+func (c *Client) CmdChallengeReset() *cobra.Command {
 	var (
 		evTag   string
 		teamIds []string
@@ -122,11 +122,11 @@ func (c *Client) CmdExerciseReset() *cobra.Command {
 				teams = append(teams, &pb.Team{Id: t})
 			}
 
-			exTag := args[0]
-			stream, err := c.rpcClient.ResetExercise(ctx, &pb.ResetExerciseRequest{
-				ExerciseTag: exTag,
-				EventTag:    evTag,
-				Teams:       teams,
+			chTag := args[0]
+			stream, err := c.rpcClient.ResetChallenge(ctx, &pb.ResetChallengeRequest{
+				ChallengeTag: chTag,
+				EventTag:     evTag,
+				Teams:        teams,
 			})
 
 			if err != nil {
