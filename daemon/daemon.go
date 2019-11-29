@@ -43,9 +43,9 @@ var (
 	InvalidArgumentsErr = errors.New("Invalid arguments provided")
 	UnknownTeamErr      = errors.New("Unable to find team by that id")
 	GrpcOptsErr         = errors.New("failed to retrieve server options")
-  NoLabByTeamIdErr    = errors.New("Lab is nil, no lab found for given team id ! ")
-	
-  version string
+	NoLabByTeamIdErr    = errors.New("Lab is nil, no lab found for given team id ! ")
+
+	version string
 )
 
 const (
@@ -89,8 +89,8 @@ type Config struct {
 	TLS                struct {
 		Enabled   bool   `yaml:"enabled"`
 		Directory string `yaml:"directory"`
-		CertFile string `yaml:"certfile"`
-		CertKey string `yaml:"certkey"`
+		CertFile  string `yaml:"certfile"`
+		CertKey   string `yaml:"certkey"`
 	} `yaml:"tls,omitempty"`
 }
 
@@ -240,19 +240,27 @@ func New(conf *Config) (*daemon, error) {
 		logPool:   logPool,
 		closers:   []io.Closer{logPool, eventPool},
 	}
+	// return daemon before starting to unfinished events ...
+	return d, nil
+}
 
-	eventFiles, err := efh.GetUnfinishedEvents()
+func (d *daemon) CreateUnfinishedEvents() error {
+
+	eventFileHub, err := store.NewEventFileHub(d.conf.EventsDir)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	for _, ef := range eventFiles {
-		err := d.createEventFromEventFile(context.Background(), ef)
+	eventFiles, err := eventFileHub.GetUnfinishedEvents()
+	if err != nil {
+		return err
+	}
+	for _, eventFile := range eventFiles {
+		err := d.createEventFromEventFile(context.Background(), eventFile)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-
-	return d, nil
+	return nil
 }
 
 type contextStream struct {
@@ -299,7 +307,9 @@ func (d *daemon) GetServer(opts ...grpc.ServerOption) *grpc.Server {
 		stream = &contextStream{stream, ctx}
 
 		header := metadata.Pairs("daemon-version", version)
-		stream.SendHeader(header)
+		if err := stream.SendHeader(header); err != nil {
+			log.Error().Err(err).Msg("daemon.GetServer send stream header error ")
+		}
 
 		for _, endpoint := range nonAuth {
 			if strings.HasSuffix(info.FullMethod, endpoint) {
@@ -319,8 +329,9 @@ func (d *daemon) GetServer(opts ...grpc.ServerOption) *grpc.Server {
 		ctx = withAuditLogger(ctx, logger)
 
 		header := metadata.Pairs("daemon-version", version)
-		grpc.SendHeader(ctx, header)
-
+		if err := grpc.SendHeader(ctx, header); err != nil {
+			log.Error().Err(err).Msg("grpc send header error")
+		}
 		for _, endpoint := range nonAuth {
 			if strings.HasSuffix(info.FullMethod, endpoint) {
 				return handler(ctx, req)
@@ -444,7 +455,11 @@ func (d *daemon) startEvent(ev event.Event) {
 		Strs("Frontends", frontendNames).
 		Msg("Creating event")
 
-	 ev.Start(context.TODO())
+	go func() {
+		if err := ev.Start(context.TODO()); err != nil {
+			log.Error().Err(err).Msg("Start event error ")
+		}
+	}()
 
 	d.eventPool.AddEvent(ev)
 }
@@ -481,7 +496,7 @@ func (d *daemon) CreateEvent(req *pb.CreateEventRequest, resp pb.Daemon_CreateEv
 		if err != nil {
 			return err
 		}
-		// check exercise before creating event file
+		// check challenge before creating event file
 		_, tagErr := d.exercises.GetExercisesByTags(t)
 		if tagErr != nil {
 			return tagErr
@@ -550,7 +565,9 @@ func (d *daemon) StopEvent(req *pb.StopEventRequest, resp pb.Daemon_StopEventSer
 		return err
 	}
 
-	ev.Close()
+	if err := ev.Close(); err != nil {
+		log.Error().Err(err).Msg("Error on closing event: ")
+	}
 	ev.Finish() // Finishing and archiving event....
 	return nil
 }
@@ -621,11 +638,13 @@ func (d *daemon) UpdateExercisesFile(ctx context.Context, req *pb.Empty) (*pb.Up
 	}, nil
 
 }
+
+// todo : review
 func (d *daemon) ResetExercise(req *pb.ResetExerciseRequest, stream pb.Daemon_ResetExerciseServer) error {
 	log.Ctx(stream.Context()).Info().
 		Str("evtag", req.EventTag).
 		Str("extag", req.ExerciseTag).
-		Msg("reset exercise")
+		Msg("reset challenge")
 
 	evtag, err := store.NewTag(req.EventTag)
 	if err != nil {
@@ -641,14 +660,19 @@ func (d *daemon) ResetExercise(req *pb.ResetExerciseRequest, stream pb.Daemon_Re
 		for _, reqTeam := range req.Teams {
 			lab, ok := ev.GetLabByTeam(reqTeam.Id)
 			if !ok {
-				stream.Send(&pb.ResetTeamStatus{TeamId: reqTeam.Id, Status: "?"})
+				if err := stream.Send(&pb.ResetTeamStatus{TeamId: reqTeam.Id, Status: "?"}); err != nil {
+					log.Error().Err(err).Msg("Error on reset team status stream ")
+
+				}
 				continue
 			}
 
 			if err := lab.Environment().ResetByTag(stream.Context(), req.ExerciseTag); err != nil {
 				return err
 			}
-			stream.Send(&pb.ResetTeamStatus{TeamId: reqTeam.Id, Status: "ok"})
+			if err := stream.Send(&pb.ResetTeamStatus{TeamId: reqTeam.Id, Status: "ok"}); err != nil {
+				log.Error().Err(err).Msg("Error on reset team status stream ")
+			}
 		}
 
 		return nil
@@ -657,14 +681,18 @@ func (d *daemon) ResetExercise(req *pb.ResetExerciseRequest, stream pb.Daemon_Re
 	for _, t := range ev.GetTeams() {
 		lab, ok := ev.GetLabByTeam(t.Id)
 		if !ok {
-			stream.Send(&pb.ResetTeamStatus{TeamId: t.Id, Status: "?"})
+			if err := stream.Send(&pb.ResetTeamStatus{TeamId: t.Id, Status: "?"}); err != nil {
+				log.Error().Err(err).Msg("Error on reset team status stream ")
+			}
 			continue
 		}
 
 		if err := lab.Environment().ResetByTag(stream.Context(), req.ExerciseTag); err != nil {
 			return err
 		}
-		stream.Send(&pb.ResetTeamStatus{TeamId: t.Id, Status: "ok"})
+		if err := stream.Send(&pb.ResetTeamStatus{TeamId: t.Id, Status: "ok"}); err != nil {
+			log.Error().Err(err).Msg("Error on reset team status stream ")
+		}
 	}
 
 	return nil
@@ -673,12 +701,12 @@ func (d *daemon) ResetExercise(req *pb.ResetExerciseRequest, stream pb.Daemon_Re
 func (d *daemon) ListEvents(ctx context.Context, req *pb.ListEventsRequest) (*pb.ListEventsResponse, error) {
 	var events []*pb.ListEventsResponse_Events
 
-	for _, event := range d.eventPool.GetAllEvents() {
-		conf := event.GetConfig()
+	for _, ev := range d.eventPool.GetAllEvents() {
+		conf := ev.GetConfig()
 		events = append(events, &pb.ListEventsResponse_Events{
 			Name:          conf.Name,
 			Tag:           string(conf.Tag),
-			TeamCount:     int32(len(event.GetTeams())),
+			TeamCount:     int32(len(ev.GetTeams())),
 			ExerciseCount: int32(len(conf.Lab.Exercises)),
 			Capacity:      int32(conf.Capacity),
 			CreationTime:  conf.StartedAt.Format(displayTimeFormat),
@@ -768,6 +796,7 @@ func (d *daemon) ListFrontends(ctx context.Context, req *pb.Empty) (*pb.ListFron
 	return &pb.ListFrontendsResponse{Frontends: respList}, nil
 }
 
+// todo: review
 func (d *daemon) ResetFrontends(req *pb.ResetFrontendsRequest, stream pb.Daemon_ResetFrontendsServer) error {
 	log.Ctx(stream.Context()).Info().
 		Int("n-teams", len(req.Teams)).
@@ -788,14 +817,18 @@ func (d *daemon) ResetFrontends(req *pb.ResetFrontendsRequest, stream pb.Daemon_
 		for _, reqTeam := range req.Teams {
 			lab, ok := ev.GetLabByTeam(reqTeam.Id)
 			if !ok {
-				stream.Send(&pb.ResetTeamStatus{TeamId: reqTeam.Id, Status: "?"})
+				if err := stream.Send(&pb.ResetTeamStatus{TeamId: reqTeam.Id, Status: "?"}); err != nil {
+					log.Error().Err(err).Msg("Reset frontends stream error, status:  ? ")
+				}
 				continue
 			}
 
 			if err := lab.ResetFrontends(stream.Context()); err != nil {
 				return err
 			}
-			stream.Send(&pb.ResetTeamStatus{TeamId: reqTeam.Id, Status: "ok"})
+			if err := stream.Send(&pb.ResetTeamStatus{TeamId: reqTeam.Id, Status: "ok"}); err != nil {
+				log.Error().Err(err).Msg("Reset team status stream error ")
+			}
 		}
 
 		return nil
@@ -804,14 +837,18 @@ func (d *daemon) ResetFrontends(req *pb.ResetFrontendsRequest, stream pb.Daemon_
 	for _, t := range ev.GetTeams() {
 		lab, ok := ev.GetLabByTeam(t.Id)
 		if !ok {
-			stream.Send(&pb.ResetTeamStatus{TeamId: t.Id, Status: "?"})
+			if err := stream.Send(&pb.ResetTeamStatus{TeamId: t.Id, Status: "?"}); err != nil {
+				log.Error().Err(err).Msg("Reset team status stream error ")
+			}
 			continue
 		}
 
 		if err := lab.ResetFrontends(stream.Context()); err != nil {
 			return err
 		}
-		stream.Send(&pb.ResetTeamStatus{TeamId: t.Id, Status: "ok"})
+		if err := stream.Send(&pb.ResetTeamStatus{TeamId: t.Id, Status: "ok"}); err != nil {
+			log.Error().Err(err).Msg("Reset team status stream error ")
+		}
 	}
 
 	return nil
@@ -893,9 +930,9 @@ func (d *daemon) Version(context.Context, *pb.Empty) (*pb.VersionResponse, error
 
 func (d *daemon) grpcOpts() ([]grpc.ServerOption, error) {
 	if d.conf.TLS.Enabled {
-		creds,err := credentials.NewServerTLSFromFile(d.conf.TLS.CertFile,d.conf.TLS.CertKey)
-		if err !=nil {
-			log.Error().Msgf("Error reading certificate from file %s ",err)
+		creds, err := credentials.NewServerTLSFromFile(d.conf.TLS.CertFile, d.conf.TLS.CertKey)
+		if err != nil {
+			log.Error().Msgf("Error reading certificate from file %s ", err)
 		}
 		return []grpc.ServerOption{grpc.Creds(creds)}, nil
 	}
@@ -907,7 +944,7 @@ func (d *daemon) Run() error {
 	// start frontend
 	go func() {
 		if d.conf.TLS.Enabled {
-			if err := http.ListenAndServeTLS(fmt.Sprintf(":%d", d.conf.Port.Secure),d.conf.TLS.CertFile,d.conf.TLS.CertKey,d.eventPool); err != nil {
+			if err := http.ListenAndServeTLS(fmt.Sprintf(":%d", d.conf.Port.Secure), d.conf.TLS.CertFile, d.conf.TLS.CertKey, d.eventPool); err != nil {
 				log.Warn().Msgf("Serving error: %s", err)
 			}
 			return
@@ -918,9 +955,13 @@ func (d *daemon) Run() error {
 	}()
 	// redirect if TLS enabled only...
 	if d.conf.TLS.Enabled {
-		go http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
-		}))
+		go func() {
+			if err := http.ListenAndServe(":8080", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+			})); err != nil {
+				log.Error().Err(err).Msg("Redirecting err ")
+			}
+		}()
 	}
 	// start gRPC daemon
 	lis, err := net.Listen("tcp", mngtPort)
