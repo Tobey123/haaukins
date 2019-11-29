@@ -2,7 +2,7 @@
 // Use of this source code is governed by a GPLv3
 // license that can be found in the LICENSE file.
 
-package exercise_test
+package challenge_test
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 
 	"time"
 
-	"github.com/aau-network-security/haaukins/exercise"
+	"github.com/aau-network-security/haaukins/challenge"
 	"github.com/aau-network-security/haaukins/store"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/rs/zerolog"
@@ -55,7 +55,7 @@ func TestBasicEnvironment(t *testing.T) {
 	preNetCount := len(networks)
 
 	ctx := context.Background()
-	env := exercise.NewEnvironment(nil)
+	env := challenge.NewEnvironment(nil)
 	if err := env.Create(ctx); err != nil {
 		t.Fatalf("unable to create new environment: %s", err)
 	}
@@ -77,7 +77,7 @@ func TestBasicEnvironment(t *testing.T) {
 	for i := 0; i < 3 && preContCount+3 != postStartContCount; i++ {
 		time.Sleep(500 * time.Millisecond)
 
-		// dhcp + dns + exercise container = 3
+		// dhcp + dns + challenge container = 3
 		containers, err = dclient.ListContainers(docker.ListContainersOptions{})
 		if err != nil {
 			t.Fatalf("unable to list containers: %s", err)

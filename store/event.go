@@ -449,7 +449,6 @@ func NewEventFileHub(path string) (EventFileHub, error) {
 			return nil, err
 		}
 	}
-
 	return &eventfilehub{
 		path: path,
 	}, nil

@@ -53,11 +53,16 @@ func main() {
 		fmt.Printf("unable to create daemon: %s\n", err)
 		return
 	}
+	log.Info().Msgf("Started daemon")
+	
+	if err := d.CreateUnfinishedEvents(); err!=nil {
+		log.Fatal().Err(err).Msg("Error while creating unfinished events ")
+	}
 
 	handleCancel(func() error {
 		return d.Close()
 	})
-	log.Info().Msgf("Started daemon")
+
 
 	if err := d.Run(); err != nil {
 		log.Fatal().Err(err).Msg("")

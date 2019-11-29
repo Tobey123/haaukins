@@ -18,7 +18,7 @@ import (
 
 func (c *Client) CmdExercise() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "exercise",
+		Use:   "challenge",
 		Short: "Actions to perform on exercises",
 		Args:  cobra.MinimumNArgs(1),
 	}
@@ -36,7 +36,7 @@ func (c *Client) CmdExercises() *cobra.Command {
 	return &cobra.Command{
 		Use:     "exercises",
 		Short:   "List exercises",
-		Example: `hkn exercise list`,
+		Example: `hkn challenge list`,
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
@@ -109,7 +109,7 @@ func (c *Client) CmdExerciseReset() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:     "reset [exercise tag]",
+		Use:     "reset [challenge tag]",
 		Short:   "Reset exercises",
 		Long:    "Reset exercises, use -t for specifying certain teams only.",
 		Example: `hkn reset sql -e esboot -t d11eb89b`,
@@ -150,7 +150,7 @@ func (c *Client) CmdExerciseReset() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&evTag, "evtag", "e", "", "the event name")
-	cmd.Flags().StringSliceVarP(&teamIds, "teams", "t", nil, "list of team ids for which to reset the exercise")
+	cmd.Flags().StringSliceVarP(&teamIds, "teams", "t", nil, "list of team ids for which to reset the challenge")
 	cmd.MarkFlagRequired("evtag")
 
 	return cmd

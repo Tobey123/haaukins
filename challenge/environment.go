@@ -2,7 +2,7 @@
 // Use of this source code is governed by a GPLv3
 // license that can be found in the LICENSE file.
 
-package exercise
+package challenge
 
 import (
 	"context"
@@ -31,8 +31,8 @@ type Environment interface {
 }
 
 type environment struct {
-	tags      map[store.Tag]*exercise
-	exercises []*exercise
+	tags      map[store.Tag]*challenge
+	exercises []*challenge
 
 	network    docker.Network
 	dnsServer  *dns.Server
@@ -44,7 +44,7 @@ type environment struct {
 
 func NewEnvironment(lib vbox.Library) Environment {
 	return &environment{
-		tags: make(map[store.Tag]*exercise),
+		tags: make(map[store.Tag]*challenge),
 		lib:  lib,
 	}
 }
@@ -72,7 +72,7 @@ func (ee *environment) Add(ctx context.Context, confs ...store.Exercise) error {
 			}
 		}
 
-		e := NewExercise(conf, dockerHost{}, ee.lib, ee.network, ee.dnsAddr)
+		e := NewChallenge(conf, dockerHost{}, ee.lib, ee.network, ee.dnsAddr)
 		if err := e.Create(ctx); err != nil {
 			return err
 		}
@@ -116,7 +116,7 @@ func (ee *environment) Start(ctx context.Context) error {
 	var wg sync.WaitGroup
 	for _, ex := range ee.exercises {
 		wg.Add(1)
-		go func(e *exercise) {
+		go func(e *challenge) {
 			if err := e.Start(ctx); err != nil && res == nil {
 				res = err
 			}

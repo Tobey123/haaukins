@@ -6,7 +6,7 @@ package lab
 
 import (
 	"context"
-	"github.com/aau-network-security/haaukins/exercise"
+	"github.com/aau-network-security/haaukins/challenge"
 	"github.com/aau-network-security/haaukins/store"
 	"github.com/aau-network-security/haaukins/virtual"
 	"github.com/aau-network-security/haaukins/virtual/docker"
@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	newEnvironment = exercise.NewEnvironment
+	newEnvironment = challenge.NewEnvironment
 )
 
 type Config struct {
@@ -77,7 +77,7 @@ type Lab interface {
 	Start(context.Context) error
 	Stop() error
 	Restart(context.Context) error
-	Environment() exercise.Environment
+	Environment() challenge.Environment
 	ResetFrontends(ctx context.Context) error
 	RdpConnPorts() []uint
 	Tag() string
@@ -88,7 +88,7 @@ type Lab interface {
 type lab struct {
 	tag         string
 	lib         vbox.Library
-	environment exercise.Environment
+	environment challenge.Environment
 	frontends   map[uint]frontendConf
 	dockerHost  docker.Host
 }
@@ -125,7 +125,7 @@ func (l *lab) addFrontend(ctx context.Context, conf store.InstanceConfig, rdpPor
 	return vm, nil
 }
 
-func (l *lab) Environment() exercise.Environment {
+func (l *lab) Environment() challenge.Environment {
 	return l.environment
 }
 
@@ -220,7 +220,7 @@ func (l *lab) Close() error {
 		}(lab.vm)
 	}
 	wg.Add(1)
-	go func(environment exercise.Environment) {
+	go func(environment challenge.Environment) {
 		// closing environment containers...
 		defer wg.Done()
 		if err := environment.Close(); err != nil {

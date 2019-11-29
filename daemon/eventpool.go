@@ -5,11 +5,11 @@
 package daemon
 
 import (
+	"github.com/aau-network-security/haaukins/event"
 	"net/http"
 	"strings"
 	"sync"
 
-	"github.com/aau-network-security/haaukins/event"
 	"github.com/aau-network-security/haaukins/store"
 )
 
@@ -30,9 +30,10 @@ func NewEventPool(host string) *eventPool {
 	}
 }
 
+
+
 func (ep *eventPool) AddEvent(ev event.Event) {
 	tag := ev.GetConfig().Tag
-
 	ep.m.Lock()
 	defer ep.m.Unlock()
 

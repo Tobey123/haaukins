@@ -52,7 +52,7 @@ func TestNewExerciseStore(t *testing.T) {
 					return
 				}
 
-				t.Fatalf("received error when creating exercise store, but expected none: %s", err)
+				t.Fatalf("received error when creating challenge store, but expected none: %s", err)
 			}
 
 			if tc.err != "" {
@@ -83,7 +83,7 @@ func TestCreateExercise(t *testing.T) {
 		err  bool
 	}{
 		{name: "Normal", in: exer{name: "Test", tags: []store.Tag{"tst"}}},
-		{name: "Invalid tag exercise", in: exer{name: "Test", tags: []store.Tag{"tst tst"}}, err: true},
+		{name: "Invalid tag challenge", in: exer{name: "Test", tags: []store.Tag{"tst tst"}}, err: true},
 	}
 
 	for _, tc := range tt {
@@ -101,7 +101,7 @@ func TestCreateExercise(t *testing.T) {
 
 			es, err := store.NewExerciseStore([]store.Exercise{}, hook)
 			if err != nil {
-				t.Fatalf("received error when creating exercise store, but expected none: %s", err)
+				t.Fatalf("received error when creating challenge store, but expected none: %s", err)
 			}
 
 			err = es.CreateExercise(store.Exercise{
@@ -125,12 +125,12 @@ func TestCreateExercise(t *testing.T) {
 			}
 
 			if count != 1 {
-				t.Fatalf("expected hook to have been run with one exercise")
+				t.Fatalf("expected hook to have been run with one challenge")
 			}
 
 			es, err = store.NewExerciseStore([]store.Exercise{}, hook)
 			if err != nil {
-				t.Fatalf("received error when creating exercise store, but expected none: %s", err)
+				t.Fatalf("received error when creating challenge store, but expected none: %s", err)
 			}
 
 			errToThrow = errors.New("Some error")
@@ -159,8 +159,8 @@ func TestGetExercises(t *testing.T) {
 			exer{name: "Test", tags: []store.Tag{"tst"}},
 			exer{name: "Test2", tags: []store.Tag{"tst2"}},
 		}, lookups: []store.Tag{"tst"}},
-		{name: "Unknown exercise", in: []exer{},
-			err:     "Unknown exercise tag: tst",
+		{name: "Unknown challenge", in: []exer{},
+			err:     "Unknown challenge tag: tst",
 			lookups: []store.Tag{"tst"}},
 	}
 
@@ -176,7 +176,7 @@ func TestGetExercises(t *testing.T) {
 
 			es, err := store.NewExerciseStore(exer)
 			if err != nil {
-				t.Fatalf("received error when creating exercise store, but expected none: %s", err)
+				t.Fatalf("received error when creating challenge store, but expected none: %s", err)
 			}
 
 			exercises, err := es.GetExercisesByTags(tc.lookups...)
@@ -211,7 +211,7 @@ func TestDeleteExercise(t *testing.T) {
 		err       string
 	}{
 		{name: "Normal", in: exer{name: "Test", tags: []store.Tag{"tst"}}, deleteTag: "tst"},
-		{name: "Unknown exercise", in: exer{name: "Test", tags: []store.Tag{"tst"}}, deleteTag: "not-test", err: "Unknown exercise tag: not-test"},
+		{name: "Unknown challenge", in: exer{name: "Test", tags: []store.Tag{"tst"}}, deleteTag: "not-test", err: "Unknown challenge tag: not-test"},
 	}
 
 	for _, tc := range tt {
@@ -222,7 +222,7 @@ func TestDeleteExercise(t *testing.T) {
 					Tags: tc.in.tags,
 				}})
 			if err != nil {
-				t.Fatalf("received error when creating exercise store, but expected none: %s", err)
+				t.Fatalf("received error when creating challenge store, but expected none: %s", err)
 			}
 
 			err = es.DeleteExerciseByTag(tc.deleteTag)

@@ -32,6 +32,7 @@ func TestEventPool(t *testing.T) {
 			ep := NewEventPool("ntp-event.dk")
 
 			for _, tag := range tc.events {
+				fmt.Println(tag)
 				ep.AddEvent(&fakeEvent{conf: store.EventConfig{Tag: store.Tag(tag)}})
 			}
 

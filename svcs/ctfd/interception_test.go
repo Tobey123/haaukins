@@ -421,7 +421,7 @@ func TestCheckFlagInterceptor(t *testing.T) {
 			}
 
 			if chal.CompletedAt == nil {
-				t.Fatalf("expected that completion date of the exercise has been added")
+				t.Fatalf("expected that completion date of the challenge has been added")
 			}
 		})
 	}

@@ -20,9 +20,9 @@ import (
 	"path/filepath"
 
 	"github.com/aau-network-security/haaukins/app/client/cli"
+	"github.com/aau-network-security/haaukins/challenge"
 	pb "github.com/aau-network-security/haaukins/daemon/proto"
 	"github.com/aau-network-security/haaukins/event"
-	"github.com/aau-network-security/haaukins/exercise"
 	"github.com/aau-network-security/haaukins/lab"
 	"github.com/aau-network-security/haaukins/store"
 	"github.com/aau-network-security/haaukins/virtual"
@@ -379,6 +379,12 @@ type fakeEvent struct {
 	event.Event
 }
 
+type fakeLab struct {
+	environment challenge.Environment
+	instances   []virtual.InstanceInfo
+	lab.Lab
+}
+
 func (fe *fakeEvent) Start(context.Context) error {
 	fe.m.Lock()
 	defer fe.m.Unlock()
@@ -442,13 +448,9 @@ func (fe *fakeEvent) GetLabByTeam(teamId string) (lab.Lab, bool) {
 	return nil, false
 }
 
-type fakeLab struct {
-	environment exercise.Environment
-	instances   []virtual.InstanceInfo
-	lab.Lab
-}
 
-func (fl *fakeLab) Environment() exercise.Environment {
+
+func (fl *fakeLab) Environment() challenge.Environment {
 	return fl.environment
 }
 
@@ -458,7 +460,7 @@ func (fl *fakeLab) InstanceInfo() []virtual.InstanceInfo {
 
 type fakeEnvironment struct {
 	resettedExercises int
-	exercise.Environment
+	challenge.Environment
 }
 
 func (fe *fakeEnvironment) ResetByTag(ctx context.Context, t string) error {

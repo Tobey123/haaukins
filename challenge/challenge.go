@@ -2,7 +2,7 @@
 // Use of this source code is governed by a GPLv3
 // license that can be found in the LICENSE file.
 
-package exercise
+package challenge
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func (dockerHost) CreateContainer(ctx context.Context, conf docker.ContainerConf
 	return c, err
 }
 
-type exercise struct {
+type challenge struct {
 	containerOpts []store.ContainerOptions
 	vboxOpts      []store.ExerciseInstanceConfig
 
@@ -55,7 +55,7 @@ type exercise struct {
 	machines []virtual.Instance
 }
 
-func NewExercise(conf store.Exercise, dhost DockerHost, vlib vbox.Library, net docker.Network, dnsAddr string) *exercise {
+func NewChallenge(conf store.Exercise, dhost DockerHost, vlib vbox.Library, net docker.Network, dnsAddr string) *challenge {
 	containerOpts := conf.ContainerOpts()
 
 	var vboxOpts []store.ExerciseInstanceConfig
@@ -63,7 +63,7 @@ func NewExercise(conf store.Exercise, dhost DockerHost, vlib vbox.Library, net d
 		vboxOpts = append(vboxOpts, vboxConf.ExerciseInstanceConfig)
 	}
 
-	return &exercise{
+	return &challenge{
 		containerOpts: containerOpts,
 		vboxOpts:      vboxOpts,
 
@@ -74,7 +74,7 @@ func NewExercise(conf store.Exercise, dhost DockerHost, vlib vbox.Library, net d
 	}
 }
 
-func (e *exercise) Create(ctx context.Context) error {
+func (e *challenge) Create(ctx context.Context) error {
 	var machines []virtual.Instance
 	var newIps []int
 	for i, opt := range e.containerOpts {
@@ -141,7 +141,7 @@ func (e *exercise) Create(ctx context.Context) error {
 	return nil
 }
 
-func (e *exercise) Start(ctx context.Context) error {
+func (e *challenge) Start(ctx context.Context) error {
 	var res error
 	var wg sync.WaitGroup
 
@@ -160,7 +160,7 @@ func (e *exercise) Start(ctx context.Context) error {
 	return res
 }
 
-func (e *exercise) Stop() error {
+func (e *challenge) Stop() error {
 	for _, m := range e.machines {
 		if err := m.Stop(); err != nil {
 			return err
@@ -170,14 +170,14 @@ func (e *exercise) Stop() error {
 	return nil
 }
 
-func (e *exercise) Close() error {
+func (e *challenge) Close() error {
 	var wg sync.WaitGroup
 
 	for _, m := range e.machines {
 		wg.Add(1)
 		go func(i virtual.Instance) {
 			if err := i.Close(); err != nil {
-				log.Warn().Msgf("error while closing exercise: %s", err)
+				log.Warn().Msgf("error while closing challenge: %s", err)
 			}
 			wg.Done()
 		}(m)
@@ -189,7 +189,7 @@ func (e *exercise) Close() error {
 	return nil
 }
 
-func (e *exercise) Reset(ctx context.Context) error {
+func (e *challenge) Reset(ctx context.Context) error {
 	if err := e.Close(); err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (e *exercise) Reset(ctx context.Context) error {
 	return nil
 }
 
-func (e *exercise) Challenges() []store.Challenge {
+func (e *challenge) Challenges() []store.Challenge {
 	var challenges []store.Challenge
 
 	for _, opt := range e.containerOpts {
@@ -224,7 +224,7 @@ func (e *exercise) Challenges() []store.Challenge {
 	return challenges
 }
 
-func (e *exercise) InstanceInfo() []virtual.InstanceInfo {
+func (e *challenge) InstanceInfo() []virtual.InstanceInfo {
 	var instances []virtual.InstanceInfo
 	for _, m := range e.machines {
 		instances = append(instances, m.Info())

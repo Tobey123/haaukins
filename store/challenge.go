@@ -27,7 +27,7 @@ type UnknownExerTagErr struct {
 }
 
 func (uee *UnknownExerTagErr) Error() string {
-	return fmt.Sprintf("Unknown exercise tag: %s", uee.tag)
+	return fmt.Sprintf("Unknown challenge tag: %s", uee.tag)
 }
 
 type ExerTagExistsErr struct {

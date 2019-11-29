@@ -2,7 +2,7 @@
 // Use of this source code is governed by a GPLv3
 // license that can be found in the LICENSE file.
 
-package exercise
+package challenge
 
 import (
 	"context"
@@ -96,7 +96,7 @@ func TestExerciseCreate(t *testing.T) {
 	conf := store.Exercise{
 		DockerConfs: dockerConfs,
 	}
-	e := NewExercise(conf, testDockerHost{}, nil, &testNetwork{}, "")
+	e := NewChallenge(conf, testDockerHost{}, nil, &testNetwork{}, "")
 	if err := e.Create(context.Background()); err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}

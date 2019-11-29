@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aau-network-security/haaukins/exercise"
+	"github.com/aau-network-security/haaukins/challenge"
 	"github.com/aau-network-security/haaukins/virtual"
 	"github.com/google/uuid"
 )
@@ -39,7 +39,7 @@ func (tl *testLab) Restart(context.Context) error {
 	return nil
 }
 
-func (tl *testLab) Environment() exercise.Environment {
+func (tl *testLab) Environment() challenge.Environment {
 	return nil
 }
 

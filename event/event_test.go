@@ -10,7 +10,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/aau-network-security/haaukins/exercise"
+	"github.com/aau-network-security/haaukins/challenge"
 	"github.com/aau-network-security/haaukins/lab"
 	"github.com/aau-network-security/haaukins/store"
 	"github.com/aau-network-security/haaukins/svcs/ctfd"
@@ -69,7 +69,7 @@ func (guac *testGuac) CreateRDPConn(opts guacamole.CreateRDPConnOpts) error {
 }
 
 type testEnvironment struct {
-	exercise.Environment
+	challenge.Environment
 }
 
 func (te *testEnvironment) Challenges() []store.Challenge {
@@ -86,7 +86,7 @@ func (lab *testLab) RdpConnPorts() []uint {
 	return lab.rdpPorts
 }
 
-func (lab *testLab) Environment() exercise.Environment {
+func (lab *testLab) Environment() challenge.Environment {
 	return &testEnvironment{}
 }
 

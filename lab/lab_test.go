@@ -8,7 +8,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aau-network-security/haaukins/exercise"
+	"github.com/aau-network-security/haaukins/challenge"
 	"github.com/aau-network-security/haaukins/store"
 	"github.com/aau-network-security/haaukins/virtual/docker"
 	"github.com/aau-network-security/haaukins/virtual/vbox"
@@ -36,7 +36,7 @@ type testVM struct {
 }
 
 type testEnvironment struct {
-	exercise.Environment
+	challenge.Environment
 }
 
 func (ee *testEnvironment) NetworkInterface() string {
